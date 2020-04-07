@@ -1,0 +1,13 @@
+{% extends "wagtail_localize_workflow/action_modules/base.html" %}
+
+{% block content %}
+    <h3>DeepL</h3>
+
+    <form action="{% url 'wagtail_localize_deepl:translate' translation_request.id %}" method="post">
+        {% csrf_token %}
+
+        <label><input type="checkbox" name="publish" checked> Publish translated pages</label>
+
+        <button type="submit" class="button button-secondary">Translate with DeepL</button>
+    </form>
+{% endblock %}

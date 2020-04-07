@@ -22,10 +22,11 @@ from wagtail_localize.translation.segments.ingest import ingest_segments
 
 
 class MessageExtractor:
-    def __init__(self, locale):
+    def __init__(self, locale, html=False):
         self.locale = locale
         self.seen_objects = set()
         self.messages = defaultdict(list)
+        self.html = html
 
     def get_path(self, instance):
         if isinstance(instance, Page):
@@ -41,7 +42,7 @@ class MessageExtractor:
 
         for segment in extract_segments(instance):
             if isinstance(segment, SegmentValue):
-                self.messages[segment.text].append(
+                self.messages[segment.html_with_ids if self.html else segment.text].append(
                     (self.get_path(instance), segment.path)
                 )
             elif isinstance(segment, RelatedObjectValue):
@@ -94,11 +95,12 @@ class MissingSegmentsException(Exception):
 
 
 class MessageIngestor:
-    def __init__(self, source_locale, target_locale, translations):
+    def __init__(self, source_locale, target_locale, translations, html=False):
         self.source_locale = source_locale
         self.target_locale = target_locale
         self.translations = translations
         self.seen_objects = set()
+        self.html = html
 
     def ingest_messages(self, instance):
         if instance.translation_key in self.seen_objects:
@@ -125,11 +127,12 @@ class MessageIngestor:
 
         missing_segments = 0
         for segment in text_segments:
-            if segment.text in self.translations:
+            segment_value = segment.html_with_ids if self.html else segment.text
+            if segment_value in self.translations:
                 translated_segments.append(
                     SegmentValue(
                         segment.path,
-                        self.translations[segment.text],
+                        self.translations[segment_value],
                         order=segment.order,
                     )
                 )
