@@ -105,19 +105,20 @@ class SegmentValue(BaseValue):
         def __repr__(self):
             return f"<SegmentValue.HTMLElement {self.identifier} '{self.element_tag}' at [{self.start}:{self.end}]>"
 
-    def __init__(self, path, text, html_elements=None, **kwargs):
+    def __init__(self, path, text, html_elements=None, translation=None, **kwargs):
         self.text = text
         self.html_elements = html_elements
+        self.translation = translation
 
         super().__init__(path, **kwargs)
 
     def clone(self):
         return SegmentValue(
-            self.path, self.text, html_elements=self.html_elements, order=self.order
+            self.path, self.text, html_elements=self.html_elements, translation=self.translation, order=self.order
         )
 
     @classmethod
-    def from_html(cls, path, html):
+    def from_html(cls, path, html, **kargs):
         text, elements = extract_html_elements(html)
 
         html_elements = []
@@ -130,7 +131,7 @@ class SegmentValue(BaseValue):
                 cls.HTMLElement(start, end, identifier, (element_type, element_attrs))
             )
 
-        return cls(path, text, html_elements)
+        return cls(path, text, html_elements, **kargs)
 
     @property
     def html(self):
@@ -268,6 +269,7 @@ class RelatedObjectValue(BaseValue):
         )
 
     def get_instance(self, locale):
+        # TODO: Accept locale by ID as well
         return self.content_type.get_object_for_this_type(
             translation_key=self.translation_key, locale=locale
         )

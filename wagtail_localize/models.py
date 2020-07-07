@@ -53,12 +53,7 @@ class Locale(models.Model):
         return get_languages().get(self.language_code)
 
     def __str__(self):
-        display_name = self.get_display_name()
-
-        if display_name:
-            return "{} ({})".format(display_name, self.language_code)
-        else:
-            return self.language_code
+        return self.get_display_name() or self.language_code
 
     @classmethod
     def get_active(cls):
@@ -95,8 +90,8 @@ def default_locale_id():
 
 class TranslatableMixin(models.Model):
     translation_key = models.UUIDField(default=uuid.uuid4, editable=False)
-    locale = models.ForeignKey(Locale, on_delete=models.PROTECT, related_name="+")
-    is_source_translation = models.BooleanField(default=True)
+    locale = models.ForeignKey(Locale, on_delete=models.PROTECT, related_name="+", editable=False)
+    is_source_translation = models.BooleanField(default=True, editable=False)
 
     translatable_fields = []
 
