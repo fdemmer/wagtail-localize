@@ -138,7 +138,6 @@ class TestTranslatablePageMixin(TestCase):
         mock_super.assert_called_once()
         _, kwargs = mock_super.call_args_list[0]
         self.assertEqual(kwargs["update_attrs"]["translation_key"], "123456")
-        self.assertTrue(kwargs["update_attrs"]["is_source_translation"])
 
     @patch("wagtail.core.models.Page.copy")
     def test_copy_reset_translation_key_true_with_update_attrs_translation_key(
@@ -162,7 +161,6 @@ class TestTranslatablePageMixin(TestCase):
         mock_super.assert_called_once()
         _, kwargs = mock_super.call_args_list[0]
         self.assertEqual(kwargs["update_attrs"]["translation_key"], "123456")
-        self.assertTrue(kwargs["update_attrs"]["is_source_translation"])
 
     @patch("wagtail.core.models.Page.copy")
     def test_copy_reset_translation_key_false(self, mock_super):
