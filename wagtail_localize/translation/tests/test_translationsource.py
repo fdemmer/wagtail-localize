@@ -12,13 +12,13 @@ from wagtail_localize.translation.models import (
     TranslationSource,
     SegmentTranslation,
     Segment,
+    SegmentLocation,
     SourceDeletedError,
     MissingTranslationError,
     MissingRelatedObjectError,
-    TranslationContext,
-    SegmentLocation,
-    TemplateLocation,
     RelatedObjectLocation,
+    TranslationContext,
+    TemplateLocation,
 )
 from wagtail_localize.translation.segments import TemplateValue, RelatedObjectValue
 from wagtail_localize.translation.segments.extract import extract_segments
@@ -40,9 +40,6 @@ def insert_segments(revision, locale, segments):
 def create_test_page(**kwargs):
     parent = kwargs.pop("parent", None) or Page.objects.get(id=1)
     page = parent.add_child(instance=TestPage(**kwargs))
-    page_revision = page.save_revision()
-    page_revision.publish()
-    page.refresh_from_db()
 
     source, created = TranslationSource.from_instance(page)
 
@@ -325,7 +322,7 @@ class TestCreateOrUpdateTranslationForPage(TestCase):
         revision = self.page.save_revision()
         revision.publish()
         self.page.refresh_from_db()
-        source_with_translated_countent = TranslationSource.from_instance(self.page)[0]
+        source_with_translated_content = TranslationSource.from_instance(self.page)[0]
 
         # Check translation hasn't been updated yet
         translated.refresh_from_db()
@@ -340,7 +337,7 @@ class TestCreateOrUpdateTranslationForPage(TestCase):
         (
             new_page,
             created,
-        ) = source_with_translated_countent.create_or_update_translation(
+        ) = source_with_translated_content.create_or_update_translation(
             self.dest_locale
         )
 
