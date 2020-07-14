@@ -12,7 +12,6 @@ from django.utils import timezone
 
 from wagtail_localize.translation.machine_translators import get_machine_translator
 from wagtail_localize.translation.models import Translation, SegmentTranslation, SegmentLocation
-from wagtail_localize.translation.segments import SegmentValue
 
 
 # TODO: Permission checks
@@ -158,12 +157,6 @@ def machine_translate(request, translation_id):
     # Get segments
     segments = defaultdict(list)
     for location in translation.source.segmentlocation_set.all().select_related("context", "segment"):
-        segment = SegmentValue.from_html(
-            location.context.path, location.segment.text
-        ).with_order(location.order)
-        if location.html_attrs:
-            segment.replace_html_attrs(json.loads(location.html_attrs))
-
         # Don't translate if there already is a translation
         if SegmentTranslation.objects.filter(
             translation_of_id=location.segment_id,
@@ -172,7 +165,7 @@ def machine_translate(request, translation_id):
         ).exists():
             continue
 
-        segments[segment.html_with_ids] = (location.segment_id, location.context_id)
+        segments[location.segment.text] = (location.segment_id, location.context_id)
 
     # TODO: We need to make sure we handle the case where two strings have the same source and context.
     # For example, if I have a rich text field with two links that have the same text but go to different places

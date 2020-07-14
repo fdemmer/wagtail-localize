@@ -33,6 +33,7 @@ from wagtail_localize.models import ParentNotTranslatedError
 
 from .segments import SegmentValue, TemplateValue, RelatedObjectValue
 from .segments.extract import extract_segments
+from .segments.html import HTMLSnippet
 from .segments.ingest import ingest_segments
 
 
@@ -289,20 +290,15 @@ class TranslationSource(models.Model):
                 else:
                     raise MissingTranslationError(location, locale)
 
-            # TODO: We need to allow SegmentValues to include both source and translation at the same time
-            segment = SegmentValue.from_html(
-                location.context.path, location.segment.text
-            ).with_order(location.order)
+            segment = SegmentValue(
+                location.context.path,
+                HTMLSnippet.from_html(location.segment.text),
+                HTMLSnippet.from_html(location.translation)
+            ) .with_order(location.order)
+
             if location.html_attrs:
-                segment.replace_html_attrs(json.loads(location.html_attrs))
-
-            if location.translation:
-                segment.translation = SegmentValue.from_html(
-                    location.context.path, location.translation
-                ).with_order(location.order)
-
-                if location.html_attrs:
-                    segment.translation.replace_html_attrs(json.loads(location.html_attrs))
+                segment.source.replace_html_attrs(json.loads(location.html_attrs))
+                segment.translation.replace_html_attrs(json.loads(location.html_attrs))
 
             segments.append(segment)
 
@@ -330,7 +326,7 @@ class TranslationSource(models.Model):
             segments.append(segment)
 
         # Ingest all translated segments
-        ingest_segments(original, translation, self.locale, locale, [segment.translation if isinstance(segment, SegmentValue) else segment for segment in segments])
+        ingest_segments(original, translation, self.locale, locale, segments)
 
         if isinstance(translation, Page):
             # Make sure the slug is valid
@@ -648,7 +644,8 @@ class SegmentLocation(BaseLocation):
 
     @classmethod
     def from_segment_value(cls, source, language, segment_value):
-        segment = Segment.from_text(language, segment_value.html_with_ids)
+        # TODO: What if the segment_value has a translation?
+        segment = Segment.from_text(language, segment_value.source.html_with_ids)
         context, context_created = TranslationContext.objects.get_or_create(
             object_id=source.object_id, path=segment_value.path,
         )
@@ -658,7 +655,7 @@ class SegmentLocation(BaseLocation):
             context=context,
             order=segment_value.order,
             segment=segment,
-            html_attrs=json.dumps(segment_value.get_html_attrs()),
+            html_attrs=json.dumps(segment_value.source.get_html_attrs()),
         )
 
         return segment_loc
